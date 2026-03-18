@@ -18,13 +18,13 @@ export async function GET(req) {
      let pdfTextContent = '';
 
      docs.forEach((doc) => {
-        pdfTextContent += doc.pageContent + pdfTextContent;
+        pdfTextContent += doc.pageContent ;
     })
     
     //2. Split the text content into chunks
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 100,
-        chunkOverlap: 20,
+        chunkSize: 1000,
+        chunkOverlap: 200,
     });
 
     const output = await splitter.createDocuments([pdfTextContent]);

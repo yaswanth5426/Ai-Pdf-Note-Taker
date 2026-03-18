@@ -1,20 +1,19 @@
-import { Loader2 } from "lucide-react";
-
 export default function PdfViewer({ fileUrl }) {
-    if (!fileUrl) {
-        return (
-            <div className="flex items-center justify-center h-[90vh] bg-gray-100 text-gray-500">
-                <Loader2 className="animate-spin" size={64} />
-            </div>
-        );
-    }
-
+  if (!fileUrl) {
     return (
-        <div className="relative w-full h-full min-h-[400px]">
-            <iframe
-                src={`${fileUrl}#toolbar=0`}
-                className="w-full h-[90vh] sm:h-[80vh] md:h-[85vh] lg:h-[90vh]"
-            />
-        </div>
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900" />
+      </div>
     );
+  }
+
+  return (
+    <div className="w-full h-screen">
+      <iframe
+        src={fileUrl}
+        className="w-full h-full border-none"
+        style={{ display: "block" }}
+      />
+    </div>
+  );
 }

@@ -1,46 +1,54 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useEditor, EditorContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import Placeholder from "@tiptap/extension-placeholder"
-import Underline from "@tiptap/extension-underline"
-import Highlight from "@tiptap/extension-highlight"
-import TextAlign from "@tiptap/extension-text-align"
-import EditorExtensions from "./EditorExtensions"
-const TextEditor = () => {
-  const editor = useEditor({
-    immediatelyRender: false,   // ⭐ correct place
+import { useEffect } from "react";
+import { EditorContent } from "@tiptap/react";
+import EditorExtenstion from "./EditorExtensions";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
-    extensions: [
-     StarterKit,
-    Underline,
-    Highlight,
-    TextAlign.configure({
-      types: ["heading", "paragraph"],
-    }),
-      Placeholder.configure({
-        placeholder: "Start taking your notes here...",
-        emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-gray-400 before:absolute before:pointer-events-none",
-      }),
-    ],
+export default function TextEditor({ fileId, editor }) {
+  const { user } = useUser();
+  const notes = useQuery(api.notes.GetNotes, 
+    fileId ? { fileId } : "skip"  // ✅ skip if fileId not ready
+  );
+  const addNotes = useMutation(api.notes.AddNotes);
 
-    editorProps: {
-      attributes: {
-        class: "focus:outline-none h-screen p-5",
-      },
-    },
-  })
+  // ✅ Load saved notes into editor
+  useEffect(() => {
+    if (editor && notes) {
+      editor.commands.setContent(notes);
+    }
+  }, [notes, editor]); // ✅ fixed dependency array
+
+  // ✅ Auto-save on every change
+  useEffect(() => {
+    if (!editor || !fileId || !user) return;
+
+    const handleUpdate = () => {
+      clearTimeout(window._notesSaveTimer);
+      window._notesSaveTimer = setTimeout(() => {
+        addNotes({
+          fileId,
+          notes: editor.getJSON(),
+          createdBy: user.primaryEmailAddress.emailAddress,
+        });
+      }, 1000);
+    };
+
+    editor.on("update", handleUpdate);
+    return () => editor.off("update", handleUpdate); // ✅ cleanup
+  }, [editor, fileId, user]);
+
+  // ✅ Always render — never return null
+  if (!editor) return <div>Loading editor...</div>;
 
   return (
     <div>
-        <EditorExtensions editor={editor} />
+      <EditorExtenstion editor={editor} />
       <div className="overflow-scroll h-[88vh]">
         <EditorContent editor={editor} className="prose max-w-none" />
       </div>
     </div>
-  )
+  );
 }
-
-export default TextEditor
