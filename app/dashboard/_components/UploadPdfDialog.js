@@ -25,7 +25,7 @@ import { useAction } from "convex/react";
 
 
 
-const UploadPdfDialog = ({ children }) => {
+const UploadPdfDialog = ({ children,isMaxFile }) => {
 const generateUploadUrl = useMutation(api.fileStorage.generateUploadUrl );
 const addFileentry = useMutation(api.fileStorage.AddFileEntryToDb);
 const {user} = useUser();
@@ -77,7 +77,7 @@ const OnUpload = async () => {
   return (
    <Dialog open={open}>
   <DialogTrigger asChild>
-    <Button onClick={()=>setOpen(true)} className = "w-full">+ Upload PDF File</Button>
+    <Button onClick={()=>setOpen(true)} disabled = {isMaxFile} className = "w-full">+ Upload PDF File</Button>
   </DialogTrigger>
   <DialogContent>
     <DialogHeader>

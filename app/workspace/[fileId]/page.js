@@ -43,17 +43,20 @@ export default function Workspace() {
     const fileUrl = fileInfo?.signedUrl ?? null;
     const fileName = fileInfo?.fileName ?? null;
 
-    return (
-        <div>
-            <WorkspaceHeader fileName={fileName} editor={editor} />
-            <div className="grid grid-cols-2 gap-5"> {/* ✅ always 2 columns */}
-    <div className="overflow-auto h-[92vh]">
-        <TextEditor fileId={fileId} editor={editor} />
-    </div>
-    <div className="h-[92vh]">
-        <PdfViewer fileUrl={fileUrl} />
-    </div>
+  return (
+    <div className="h-screen flex flex-col overflow-hidden">
+        <WorkspaceHeader fileName={fileName} editor={editor} fileId={fileId} />
+        <div className="grid grid-cols-2 flex-1 overflow-hidden">
+            {/* Text Editor - left */}
+            <div className="overflow-y-auto border-r">
+                <TextEditor fileId={fileId} editor={editor} />
+            </div>
+            {/* PDF Viewer - right */}
+           <div className="overflow-hidden h-full">
+    <PdfViewer fileUrl={fileUrl} />
 </div>
         </div>
-    );
+    </div>
+   
+);
 }

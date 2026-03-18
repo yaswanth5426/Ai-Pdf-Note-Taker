@@ -9,9 +9,7 @@ import { redirect } from "next/navigation";
 
 export default function Dashboard() {
     const { user } = useUser();
-    if (!user) {
-        redirect("/sign-in");
-    }
+    
     const fileList = useQuery(api.fileStorage.getUserFiles, {
         userEmail: user?.primaryEmailAddress?.emailAddress,
     });
