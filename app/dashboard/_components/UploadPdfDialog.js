@@ -83,8 +83,10 @@ const UploadPdfDialog = ({ children, isMaxFile }) => {
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}> {/* ✅ onOpenChange fixes X button */}
+ return (
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onClose();
+    }}>
       <DialogTrigger asChild>
         <Button
           onClick={() => setOpen(true)}

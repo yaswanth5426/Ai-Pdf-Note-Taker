@@ -2,9 +2,6 @@
   "name": "ai-pdf-note-taker",
   "version": "0.1.0",
   "private": true,
-  "overrides": {
-    "pdf-parse": "2.4.5"
-  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -32,6 +29,7 @@
     "install": "^0.13.0",
     "lucide-react": "^0.576.0",
     "next": "16.1.6",
+    "pdf-parse": "^2.4.5",
     "radix-ui": "^1.4.3",
     "razorpay": "^2.9.6",
     "react": "^18",
