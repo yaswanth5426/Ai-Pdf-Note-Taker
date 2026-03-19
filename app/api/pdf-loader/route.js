@@ -1,46 +1,39 @@
 import { NextResponse } from "next/server";
+import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
+//const pdfUrl = "https://tidy-gecko-730.convex.cloud/api/storage/90cb0c1f-e3c8-4cde-bef6-2c6fd327b7af"
+
 export async function GET(req) {
-  const reqUrl = req.url;
-  const { searchParams } = new URL(reqUrl);
-  const pdfUrl = searchParams.get('pdfUrl');
-
-  console.log("1. PDF loader called");
-  console.log("2. PDF URL:", pdfUrl);
-
-  try {
-    console.log("3. Fetching PDF...");
+    const reqUrl = req.url;
+    const { searchParams } = new URL(reqUrl);
+    const pdfUrl = searchParams.get('pdfUrl');
+    console.log("PDF URL:", pdfUrl);
+    //1. Load the PDF file from the URL
     const response = await fetch(pdfUrl);
-    console.log("4. Fetch status:", response.status);
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    console.log("5. Buffer size:", buffer.length);
+    const data = await response.blob();
+    const loader = new WebPDFLoader(data);
+    const docs = await loader.load();
 
-    console.log("6. Importing pdf-parse...");
-    const pdf = (await import('pdf-parse')).default;
-    console.log("7. pdf-parse imported");
-    
-    const pdfData = await pdf(buffer);
-    console.log("8. PDF parsed, text length:", pdfData.text.length);
+     let pdfTextContent = '';
 
+     docs.forEach((doc) => {
+        pdfTextContent += doc.pageContent ;
+    })
+    
+    //2. Split the text content into chunks
     const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 1000,
-      chunkOverlap: 200,
+        chunkSize: 1000,
+        chunkOverlap: 200,
     });
 
-    const output = await splitter.createDocuments([pdfData.text]);
-    const splitterList = output.map(doc => doc.pageContent);
-    console.log("9. Chunks:", splitterList.length);
+    const output = await splitter.createDocuments([pdfTextContent]);
 
+    let splitterList = [];
+
+    output.forEach(doc=>{
+        splitterList.push(doc.pageContent);
+    })
+    
     return NextResponse.json({ result: splitterList });
-  } catch (error) {
-    console.error("ERROR at step:", error.message);
-    console.error("Stack:", error.stack);
-    return NextResponse.json({ 
-      error: error.message,
-      stack: error.stack 
-    }, { status: 500 });
-  }
 }
