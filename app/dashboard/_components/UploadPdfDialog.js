@@ -25,20 +25,19 @@ const UploadPdfDialog = ({ children, isMaxFile }) => {
   const { user } = useUser();
   const getFileUrl = useMutation(api.fileStorage.getFileUrl);
   const embeddedDocument = useAction(api.myAction.ingest);
-  const [file, setFile] = useState();
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState('');
   const [open, setOpen] = useState(false);
 
   const OnFileSelect = (event) => {
-  const selectedFile = event.target.files[0];
-  setFile(selectedFile);
-  // ✅ Set filename from file name without extension
-  if (selectedFile) {
-    const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
-    setFileName(nameWithoutExt);
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
+    if (selectedFile) {
+      const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
+      setFileName(nameWithoutExt);
+    }
   }
-}
 
   const onClose = () => {
     if (loading) return;
@@ -74,22 +73,20 @@ const UploadPdfDialog = ({ children, isMaxFile }) => {
         createdBy: user?.primaryEmailAddress?.emailAddress
       });
 
-      toast.loading("Processing PDF...", { id: "upload" }); // ✅ update toast
-
+      toast.loading("Processing PDF...", { id: "upload" });
       const ApiResponse = await axios.get('/api/pdf-loader?pdfUrl=' + fileUrl);
       
-      toast.loading("Generating embeddings...", { id: "upload" }); // ✅ update toast
-
+      toast.loading("Generating embeddings...", { id: "upload" });
       await embeddedDocument({
         splitText: ApiResponse.data.result,
         fileId,
       });
 
-      toast.success("PDF uploaded successfully! 🎉", { id: "upload" }); // ✅ success
+      toast.success("PDF uploaded successfully! 🎉", { id: "upload" });
       setOpen(false);
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Upload failed: " + error.message, { id: "upload" }); // ✅ error
+      toast.error("Upload failed: " + error.message, { id: "upload" });
     } finally {
       setLoading(false);
     }
@@ -114,19 +111,32 @@ const UploadPdfDialog = ({ children, isMaxFile }) => {
           <DialogDescription asChild>
             <div>
               <h2 className='mt-5'>Select a file to upload</h2>
-              <div className='gap-2 p-3'>
-                <input
-                  type='file'
-                  accept='application/pdf'
-                  onChange={OnFileSelect}
-                />
+              
+              {/* ✅ Styled file picker */}
+              <div className='flex items-center gap-3 mt-3 mb-4'>
+                <label className="cursor-pointer">
+                  <div className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition">
+                    Choose file
+                  </div>
+                  <input
+                    type='file'
+                    accept='application/pdf'
+                    onChange={OnFileSelect}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                  {file ? file.name : "No file chosen"}
+                </span>
               </div>
+
               <div>
-                <label>File Name *</label>
+                <label className="text-sm font-medium">File Name *</label>
                 <Input
                   placeholder='File Name'
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
+                  className="mt-1"
                 />
               </div>
             </div>
