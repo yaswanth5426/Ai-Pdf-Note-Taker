@@ -21,16 +21,16 @@ export default function Dashboard() {
                 {fileList?.length > 0
                     ? fileList?.map((file, index) => (
                           <Link href={`/workspace/${file.fileId}`} key={index}>
-                              <div className="flex shadow-md p-5 rounded-md flex-col items-center justify-center border hover:scale-105 transition-all">
+                              <div className="flex shadow-md p-5 rounded-md flex-col items-center justify-center border hover:scale-105 transition-all w-full overflow-hidden">
                                   <Image
                                       src={"/pdf.png"}
                                       alt="Pdf file"
                                       width={70}
                                       height={70}
                                   />
-                                  <h2 className="mt-3 font-medium text-md cursor-pointer">
-                                      {file?.fileName}
-                                  </h2>
+                                  <h2 className="mt-3 font-medium text-sm text-center line-clamp-2 break-words w-full">
+    {file?.fileName}
+</h2>
                                   {/* <h2>{file._creationTime}</h2> */}
                               </div>
                           </Link>
