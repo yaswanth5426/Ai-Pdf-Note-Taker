@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -8,112 +8,139 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Loader2Icon, SplitSquareVertical } from 'lucide-react'
-import { useMutation } from "convex/react";
+import { Loader2Icon } from 'lucide-react'
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from '@clerk/nextjs'
 import { v4 as uuidv4 } from "uuid";
-import { useState } from 'react';
 import axios from 'axios';
-import { useAction } from "convex/react";
+import { toast } from 'sonner';
 
+const UploadPdfDialog = ({ children, isMaxFile }) => {
+  const generateUploadUrl = useMutation(api.fileStorage.generateUploadUrl);
+  const addFileentry = useMutation(api.fileStorage.AddFileEntryToDb);
+  const { user } = useUser();
+  const getFileUrl = useMutation(api.fileStorage.getFileUrl);
+  const embeddedDocument = useAction(api.myAction.ingest);
+  const [file, setFile] = useState();
+  const [loading, setLoading] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const [open, setOpen] = useState(false);
 
+  const OnFileSelect = (event) => {
+    setFile(event.target.files[0]);
+  }
 
-
-
-const UploadPdfDialog = ({ children,isMaxFile }) => {
-const generateUploadUrl = useMutation(api.fileStorage.generateUploadUrl );
-const addFileentry = useMutation(api.fileStorage.AddFileEntryToDb);
-const {user} = useUser();
-const getFileUrl = useMutation(api.fileStorage.getFileUrl);
-const embeddedDocument = useAction(api.myAction.ingest);
-const [file,setFile] = React.useState();
-const [loading,setLoading] = React.useState(false);
-const [fileName, setFileName] = useState(null);
-const [open, setOpen] = React.useState(false);
-const OnFileSelect = (event) => {
-  
-      setFile(event.target.files[0]);
-}
-
-const OnUpload = async () => {
-  setLoading(true);
-
-   const postUrl = await generateUploadUrl();
-
-   const result = await fetch(postUrl, {
-      method: "POST",
-      headers: { "Content-Type": file?.type },
-      body: file,
-    });
-    const { storageId } = await result.json();
-    const fileId= uuidv4();
-    const fileUrl = await getFileUrl({storageId:storageId});
-    const resp = await addFileentry({
-      fileId:fileId,
-      storageId:storageId,
-      fileUrl:fileUrl,
-      fileName:fileName??'Unnamed File',
-      createdBy:user?.primaryEmailAddress?.emailAddress 
-    })
-    
-    console.log(resp);
-
-     const ApiResponse = await axios.get('/api/pdf-loader?pdfUrl='+fileUrl);
-      console.log(ApiResponse.data.result);
-    await embeddedDocument({
-        splitText:ApiResponse.data.result,
-        fileId:fileId
-      });
-    //   console.log(embeddedResult);
-    setLoading(false);
+  const onClose = () => {
+    if (loading) return;
     setOpen(false);
-}
+    setFile(null);
+    setFileName('');
+  }
+
+  const OnUpload = async () => {
+    if (!file) {
+      toast.error("Please select a file first");
+      return;
+    }
+    setLoading(true);
+    toast.loading("Uploading PDF...", { id: "upload" });
+
+    try {
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file?.type },
+        body: file,
+      });
+      const { storageId } = await result.json();
+      const fileId = uuidv4();
+      const fileUrl = await getFileUrl({ storageId });
+
+      await addFileentry({
+        fileId,
+        storageId,
+        fileUrl,
+        fileName: fileName || 'Unnamed File',
+        createdBy: user?.primaryEmailAddress?.emailAddress
+      });
+
+      toast.loading("Processing PDF...", { id: "upload" }); // ✅ update toast
+
+      const ApiResponse = await axios.get('/api/pdf-loader?pdfUrl=' + fileUrl);
+      
+      toast.loading("Generating embeddings...", { id: "upload" }); // ✅ update toast
+
+      await embeddedDocument({
+        splitText: ApiResponse.data.result,
+        fileId,
+      });
+
+      toast.success("PDF uploaded successfully! 🎉", { id: "upload" }); // ✅ success
+      setOpen(false);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Upload failed: " + error.message, { id: "upload" }); // ✅ error
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-   <Dialog open={open}>
-  <DialogTrigger asChild>
-    <Button onClick={()=>setOpen(true)} disabled = {isMaxFile} className = "w-full">+ Upload PDF File</Button>
-  </DialogTrigger>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle> Upload Pdf File </DialogTitle>
-       <DialogDescription asChild>
-        <div className=''>
-           <h2 className='mt-5'>Select a file to upload</h2>  
-            <div className=' gap-2 p-3 '>
-         
-               <input type='file' accept = 'application/pdf'
-                 onChange= {(event) => OnFileSelect(event)}
-               />
-            </div>
-
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) onClose();
+    }}>
+      <DialogTrigger asChild>
+        <Button
+          onClick={() => setOpen(true)}
+          disabled={isMaxFile}
+          className="w-full"
+        >
+          + Upload PDF File
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Upload Pdf File</DialogTitle>
+          <DialogDescription asChild>
             <div>
-              <label> File Name *</label>
-              <Input placeholder=' File Name' onChange= {(e) => setFileName(e.target.value)} />  
+              <h2 className='mt-5'>Select a file to upload</h2>
+              <div className='gap-2 p-3'>
+                <input
+                  type='file'
+                  accept='application/pdf'
+                  onChange={OnFileSelect}
+                />
+              </div>
+              <div>
+                <label>File Name *</label>
+                <Input
+                  placeholder='File Name'
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                />
+              </div>
             </div>
-
-           
-        </div>
-            </DialogDescription>
-    </DialogHeader>
-     <DialogFooter className="sm:justify-end">
-          <DialogClose asChild>
-            <Button type="button">Close</Button>
-          </DialogClose>
-          <Button onClick={OnUpload} disabled = {loading}>
-            {
-              loading?<Loader2Icon className='animate-spin'/>:'Upload'
-            }
-
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Close
+          </Button>
+          <Button onClick={OnUpload} disabled={loading || !file}>
+            {loading ? <Loader2Icon className='animate-spin' /> : 'Upload'}
           </Button>
         </DialogFooter>
-  </DialogContent>
-</Dialog>
+      </DialogContent>
+    </Dialog>
   )
 }
 

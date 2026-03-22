@@ -1,39 +1,32 @@
 import { NextResponse } from "next/server";
-import { WebPDFLoader } from "@langchain/community/document_loaders/web/pdf";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
-//const pdfUrl = "https://tidy-gecko-730.convex.cloud/api/storage/90cb0c1f-e3c8-4cde-bef6-2c6fd327b7af"
-
 export async function GET(req) {
-    const reqUrl = req.url;
-    const { searchParams } = new URL(reqUrl);
-    const pdfUrl = searchParams.get('pdfUrl');
-    console.log("PDF URL:", pdfUrl);
-    //1. Load the PDF file from the URL
+  const reqUrl = req.url;
+  const { searchParams } = new URL(reqUrl);
+  const pdfUrl = searchParams.get('pdfUrl');
+
+  try {
     const response = await fetch(pdfUrl);
-    const data = await response.blob();
-    const loader = new WebPDFLoader(data);
-    const docs = await loader.load();
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-     let pdfTextContent = '';
+    // ✅ Import from lib directly to avoid test file bug
+    const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default;
+    const pdfData = await pdfParse(buffer);
+    const pdfTextContent = pdfData.text;
 
-     docs.forEach((doc) => {
-        pdfTextContent += doc.pageContent ;
-    })
-    
-    //2. Split the text content into chunks
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 200,
+      chunkSize: 1000,
+      chunkOverlap: 200,
     });
 
     const output = await splitter.createDocuments([pdfTextContent]);
+    const splitterList = output.map(doc => doc.pageContent);
 
-    let splitterList = [];
-
-    output.forEach(doc=>{
-        splitterList.push(doc.pageContent);
-    })
-    
     return NextResponse.json({ result: splitterList });
+  } catch (error) {
+    console.error("PDF loader error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

@@ -5,16 +5,29 @@ import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useMutation } from "convex/react"; // ✅ add
+import { api } from "@/convex/_generated/api"; // ✅ add
 
 export default function Home() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const createUser = useMutation(api.user.createUser); // ✅ add
 
   useEffect(() => {
     if (isLoaded && user) {
-      router.replace("/dashboard");
+      CheckUser(); // ✅ call CheckUser instead of direct redirect
     }
   }, [user, isLoaded]);
+
+  const CheckUser = async () => {
+    // ✅ create user in Convex first, then redirect
+    await createUser({
+      email: user?.primaryEmailAddress?.emailAddress,
+      imageUrl: user?.imageUrl,
+      userName: user?.fullName,
+    });
+    router.replace("/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">

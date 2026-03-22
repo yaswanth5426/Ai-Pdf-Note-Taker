@@ -1,0 +1,77 @@
+'use client'
+import React from 'react'
+import Image from 'next/image'
+import { Layout, ShieldCheck } from 'lucide-react'
+import { Progress } from "@/components/ui/progress"
+import UploadPdfDialog from './UploadPdfDialog'
+import { useUser } from '@clerk/nextjs'
+import { useQuery } from 'convex/react'
+import { api } from '@/convex/_generated/api'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'  // ✅ for active path
+
+const SideBar = (getUserInfo) => {
+  const { user } = useUser()
+  const path = usePathname()  // ✅ get current path
+
+  const fileList = useQuery(
+    api.fileStorage.getUserFiles,
+    user ? { userEmail: user.primaryEmailAddress.emailAddress } : "skip"
+  )
+  const userInfo = useQuery(
+  api.user.getUserInfo,
+  user ? { userEmail: user.primaryEmailAddress.emailAddress } : "skip"
+)
+
+  return (
+    <div className="shadow-md h-screen p-7 flex flex-col justify-between">
+
+      {/* Top Section */}
+      <div>
+        <Image
+          src="/vecteezy_pdf-document-icon-or-logo_20609297.svg"
+          alt="logo"
+          width={170}
+          height={120}
+          loading="eager"
+          style={{ height: "auto" }}
+        />
+
+        <div className="mt-10">
+          <UploadPdfDialog isMaxFile={!userInfo?.upgrade && (fileList?.length ?? 0) >= 5} />
+
+          <Link href="/dashboard">
+            <div className={`flex gap-2 items-center p-3 mt-5 hover:bg-slate-100 rounded-lg cursor-pointer ${path === '/dashboard' && 'bg-slate-200'}`}>
+              <Layout size={20} />
+              <h2>Workspace</h2>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/upgrade">
+            <div className={`flex gap-2 items-center p-3 mt-1 hover:bg-slate-100 rounded-lg cursor-pointer ${path === '/dashboard/upgrade' && 'bg-slate-200'}`}>
+              <ShieldCheck size={20} />
+              <h2>Upgrade</h2>
+            </div>
+          </Link>
+
+        </div>
+      </div>
+
+      {/* Bottom Section */}
+      {!getUserInfo?.upgrade && (
+                <div className="absolute bottom-24 w-[80%]">
+                    <Progress value={(fileList?.length / 5) * 100} />
+                    <p className="text-sm mt-1">
+                        {fileList?.length} out of 5 Pdf Uploaded
+                    </p>
+                    <p className="text-sm mt-2 text-gray-400">
+                        Upgrade to Upload more PDF
+                    </p>
+                </div>
+            )}
+
+    </div>
+  )
+}
+
+export default SideBar

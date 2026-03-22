@@ -35,14 +35,14 @@ export const userUpgradePlan = mutation({
         const result = await ctx.db
             .query("users")
             .filter((q) => q.eq(q.field("email"), args.userEmail))
-            .collect();
+            .first(); // ✅ use .first() instead of .collect()
 
-        if (result) {
-            await ctx.db.patch(result[0]._id, { upgrade: true });
-            return "Success";
+        if (!result) {
+            return "User not found";
         }
 
-        return "Error";
+        await ctx.db.patch(result._id, { upgrade: true }); // ✅ result directly, not result[0]
+        return "Success";
     },
 });
 
