@@ -71,7 +71,7 @@ Give a clear structured answer in HTML.
   const btn = "p-2 rounded hover:bg-gray-200 transition"
 
   return (
-    <div className="p-3 border-b flex gap-2 flex-wrap">
+    <div className="p-3 border-b flex gap-2 flex-wrap  sticky top-0 z-10 bg-white">
       <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`${btn} ${editor.isActive("heading", { level: 1 }) ? "text-blue-500 bg-blue-50" : ""}`}><Heading1 className="w-5 h-5" /></button>
       <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`${btn} ${editor.isActive("heading", { level: 2 }) ? "text-blue-500 bg-blue-50" : ""}`}><Heading2 className="w-5 h-5" /></button>
       <button onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`${btn} ${editor.isActive("heading", { level: 3 }) ? "text-blue-500 bg-blue-50" : ""}`}><Heading3 className="w-5 h-5" /></button>

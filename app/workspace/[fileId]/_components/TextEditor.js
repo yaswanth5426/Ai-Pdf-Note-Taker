@@ -46,9 +46,9 @@ export default function TextEditor({ fileId, editor }) {
   return (
     <div>
       <EditorExtenstion editor={editor} />
-      <div className="overflow-scroll h-[88vh]">
-        <EditorContent editor={editor} className="prose max-w-none" />
-      </div>
+      <div className="overflow-y-auto h-[calc(100vh-120px)] scrollbar-thin">
+    <EditorContent editor={editor} className="prose max-w-none" />
+</div>
     </div>
   );
 }

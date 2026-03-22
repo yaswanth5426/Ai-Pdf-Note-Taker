@@ -31,8 +31,14 @@ const UploadPdfDialog = ({ children, isMaxFile }) => {
   const [open, setOpen] = useState(false);
 
   const OnFileSelect = (event) => {
-    setFile(event.target.files[0]);
+  const selectedFile = event.target.files[0];
+  setFile(selectedFile);
+  // ✅ Set filename from file name without extension
+  if (selectedFile) {
+    const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, "");
+    setFileName(nameWithoutExt);
   }
+}
 
   const onClose = () => {
     if (loading) return;

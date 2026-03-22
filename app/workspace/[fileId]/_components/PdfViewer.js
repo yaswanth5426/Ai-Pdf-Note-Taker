@@ -8,11 +8,11 @@ export default function PdfViewer({ fileUrl }) {
   }
 
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className="h-full w-full">
       <iframe
-        src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+        src={fileUrl}
         className="w-full h-full border-none"
-        style={{ display: "block", overflow: "hidden" }}
+        style={{ display: "block" }}
       />
     </div>
   );
